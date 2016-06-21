@@ -1,0 +1,24 @@
+{
+  "name": "upload-test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "browserify src/script.js -vd -t babelify --presets es2015 | exorcist build/script.js.map > build/script.js",
+    "watch": "watchify src/script.js -vd -t babelify --presets es2015 -o build/script.js | exorcist build/script.js.map > build/script.js"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "array-buffer-concat": "^1.0.1",
+    "blueimp-canvas-to-blob": "^3.3.0",
+    "blueimp-load-image": "^2.6.1",
+    "browser-filesaver": "^1.1.1",
+    "buffer": "^4.6.0",
+    "icc": "0.0.2"
+  },
+  "devDependencies": {
+    "babelify": "^7.3.0"
+  }
+}
