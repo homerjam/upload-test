@@ -23,7 +23,7 @@ loadImage.metaDataParsers.jpeg[0xffe2].push(function (dataView, offset, length, 
   }
 });
 
-function fileHandler (event) {
+function fileHandler(event) {
   event.preventDefault();
 
   event = event.originalEvent || event;
@@ -37,15 +37,14 @@ function fileHandler (event) {
   }
 
   loadImage.parseMetaData(fileOrBlob, function (data) {
-    if (!data.imageHead) {
-      console.error('No image header', fileOrBlob);
-      return;
-    }
+    // if (!data.imageHead) {
+    //   console.error('No image header');
+    //   return;
+    // }
 
-    console.log(data);
-
-    // var exif = data.exif.getAll();
-    // console.log(exif);
+    var exif = data.exif.getAll();
+    console.log('exif:');
+    console.dir(exif);
 
     if (data.iccProfile) {
       // Convert the profile ArrayBuffer into a normal buffer for the `icc` parser module
@@ -57,31 +56,43 @@ function fileHandler (event) {
 
       // Parse the profile
       var profile = icc.parse(buffer);
+      console.log('profile:');
       console.dir(profile);
 
       // Just for fun convert the profile into a blob for download
-      var iccBlob = new Blob([data.iccProfile], {type: 'application/vnd.iccprofile'});
+      var iccBlob = new Blob([data.iccProfile], {
+        type: 'application/vnd.iccprofile'
+      });
+
       saveAs(iccBlob, 'profile.icc');
     }
 
     loadImage(fileOrBlob, function (resizedImageCanvas) {
       resizedImageCanvas.toBlob(function (resizedBlob) {
-        // Combine data.imageHead with the image body of a resized file
-        // to create scaled images with the original image meta data, e.g.:
-        var blob = new Blob([
-          data.imageHead,
-          // Resized images always have a head size of 20 bytes,
-          // including the JPEG marker and a minimal JFIF header:
-          loadImage.blobSlice.call(resizedBlob, 20),
-        ], {
-          type: resizedBlob.type,
-        });
+          var parts = [];
 
-        // Download the resized image
-        saveAs(blob, 'image.jpg');
+          if (data.imageHead) {
+            // Combine data.imageHead with the image body of a resized file
+            // to create scaled images with the original image meta data, e.g.:
+            parts.push(data.imageHead);
 
-      },
-        'image/jpeg'
+            // Resized images always have a head size of 20 bytes,
+            // including the JPEG marker and a minimal JFIF header:
+            parts.push(loadImage.blobSlice.call(resizedBlob, 20));
+
+          } else {
+            parts.push(resizedBlob);
+          }
+
+          var blob = new Blob(parts, {
+            type: resizedBlob.type,
+          });
+
+          // Download the resized image
+          saveAs(blob, fileOrBlob.type.replace('/', '.'));
+
+        },
+        fileOrBlob.type
       );
 
     }, {
@@ -96,8 +107,7 @@ function fileHandler (event) {
     // required to convert the colorspace(?):
     maxMetaDataSize: 1024000,
     disableImageHead: false,
-  }
-  );
+  });
 }
 
 document.getElementById('file-input').addEventListener('change', fileHandler);
